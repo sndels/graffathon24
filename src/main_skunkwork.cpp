@@ -13,6 +13,7 @@
 #include "shader.hpp"
 #include "timer.hpp"
 #include "window.hpp"
+#include <cassert>
 #include <cstdio>
 
 // Comment out to compile in demo-mode, so close when music stops etc.
@@ -31,6 +32,23 @@ static struct sync_cb audioSync = {
 
 #define XRES 1920
 #define YRES 1080
+
+#define PARTICLE_COUNT (256 * 1'000)
+
+// TODO: Proper function?
+#define DRAW_PARTICLES()                                                       \
+    do                                                                         \
+    {                                                                          \
+        glClearColor(0.f, 0.f, 0.f, 0.f);                                      \
+        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);                    \
+        glEnable(GL_DEPTH_TEST);                                               \
+        glEnable(GL_BLEND);                                                    \
+        glBlendFunc(GL_SRC_ALPHA, GL_ONE);                                     \
+        glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 0, ssbo);                   \
+        glBindVertexArray(dummyVao);                                           \
+        glDrawArrays(GL_TRIANGLES, 0, 6 * PARTICLE_COUNT);                     \
+        glBindVertexArray(0);                                                  \
+    } while (0)
 
 #if defined(DEMO_MODE) && defined(_WIN32)
 int APIENTRY WinMain(
@@ -111,6 +129,9 @@ int main(int argc, char *argv[])
         RES_DIRECTORY "shader/ray_marching_frag.glsl");
     sceneShaders.emplace_back(
         "Text", rocket, vertPath, RES_DIRECTORY "shader/text_frag.glsl");
+    sceneShaders.emplace_back(
+        "Solid", rocket, RES_DIRECTORY "shader/solid_vert.glsl",
+        RES_DIRECTORY "shader/solid_frag.glsl");
     Shader compositeShader(
         "Composite", rocket, vertPath,
         RES_DIRECTORY "shader/composite_frag.glsl");
@@ -132,13 +153,17 @@ int main(int argc, char *argv[])
 
     Timer reloadTime;
     Timer globalTime;
+    GpuProfiler computeProf(5);
     GpuProfiler scenePingProf(5);
     GpuProfiler scenePongProf(5);
     GpuProfiler compositeProf(5);
     std::vector<std::pair<std::string, const GpuProfiler *>> profilers = {
+        {"Compute", &computeProf},
         {"ScenePing", &scenePingProf},
         {"ScenePong", &scenePongProf},
-        {"Composite", &compositeProf}};
+        {"Composite", &compositeProf},
+    };
+    Shader compute("Compute", rocket, RES_DIRECTORY "shader/simple_comp.glsl");
 
     TextureParams rgba16fParams = {
         GL_RGBA16F,         GL_RGBA,           GL_FLOAT, GL_LINEAR, GL_LINEAR,
@@ -152,7 +177,21 @@ int main(int argc, char *argv[])
 
     AudioStream::getInstance().play();
 
+    GLuint dummyVao;
+    glGenVertexArrays(1, &dummyVao);
+
     int32_t overrideIndex = -1;
+
+    GLuint ssbo;
+    glGenBuffers(1, &ssbo);
+    glBindBuffer(GL_SHADER_STORAGE_BUFFER, ssbo);
+    {
+        std::vector<uint32_t> zeros(PARTICLE_COUNT * 4, 0);
+        glBufferData(
+            GL_SHADER_STORAGE_BUFFER, zeros.size() * sizeof(uint32_t),
+            zeros.data(), GL_DYNAMIC_DRAW);
+    }
+    glBindBuffer(GL_SHADER_STORAGE_BUFFER, 0);
 
     // Run the main loop
     while (window.open())
@@ -193,7 +232,10 @@ int main(int argc, char *argv[])
         int32_t pongIndex = std::clamp(
             (int32_t)(float)sync_get_val(pongScene, syncRow), 0,
             (int32_t)sceneShaders.size() - 1);
+        pingIndex = 3;
+        pongIndex = 1;
 
+        glClearColor(0.f, 0.f, 0.f, 1.f);
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
         float const currentTimeS = (float)AudioStream::getInstance().getTimeS();
@@ -203,6 +245,7 @@ int main(int argc, char *argv[])
             float uiTimeS = currentTimeS;
 
             std::vector<Shader *> shaders{&compositeShader};
+            shaders.push_back(&compute);
             for (Shader &s : sceneShaders)
                 shaders.push_back(&s);
 
@@ -218,6 +261,7 @@ int main(int argc, char *argv[])
         if (reloadTime.getSeconds() > 0.5f)
         {
             compositeShader.reload();
+            compute.reload();
             for (Shader &s : sceneShaders)
                 s.reload();
             reloadTime.reset();
@@ -226,6 +270,31 @@ int main(int argc, char *argv[])
         // TODO: No need to reset before switch back
         if (gui.useSliderTime())
             globalTime.reset();
+
+        {
+            computeProf.startSample();
+            compute.bind(0.0);
+
+            compute.setFloat(
+                "uTime",
+#ifdef DEMO_MODE
+                currentTimeS
+#else  // DEMO_NODE
+                gui.useSliderTime() ? gui.sliderTime() : globalTime.getSeconds()
+#endif // DEMO_MODE
+            );
+
+            glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 0, ssbo);
+
+            static_assert(
+                PARTICLE_COUNT % 256 == 0,
+                "Particle count needs to be divisible by group size as we "
+                "don't do checking in compute");
+            glDispatchCompute(PARTICLE_COUNT / 256, 1, 1);
+
+            glBindBuffer(GL_SHADER_STORAGE_BUFFER, 0);
+            computeProf.endSample();
+        }
 
         if (overrideIndex >= 0)
         {
@@ -241,7 +310,10 @@ int main(int argc, char *argv[])
             );
             sceneShaders[overrideIndex].setVec2(
                 "uRes", (GLfloat)window.width(), (GLfloat)window.height());
-            q.render();
+            if (overrideIndex != 3)
+                q.render();
+            else
+                DRAW_PARTICLES();
             scenePingProf.endSample();
         }
         else
@@ -260,7 +332,11 @@ int main(int argc, char *argv[])
             );
             sceneShaders[pingIndex].setVec2(
                 "uRes", (GLfloat)window.width(), (GLfloat)window.height());
-            q.render();
+            if (pingIndex != 3)
+                q.render();
+            else
+                DRAW_PARTICLES();
+
             glBindFramebuffer(GL_DRAW_FRAMEBUFFER, 0);
             scenePingProf.endSample();
 
@@ -277,7 +353,10 @@ int main(int argc, char *argv[])
             );
             sceneShaders[pongIndex].setVec2(
                 "uRes", (GLfloat)window.width(), (GLfloat)window.height());
-            q.render();
+            if (pongIndex != 3)
+                q.render();
+            else
+                DRAW_PARTICLES();
             glBindFramebuffer(GL_DRAW_FRAMEBUFFER, 0);
             scenePongProf.endSample();
 

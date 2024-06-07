@@ -46,21 +46,25 @@ void main()
 
     vec4 ping = sampleSource(uScenePingColorDepth, dCaberr);
     vec4 pong = sampleSource(uScenePongColorDepth, dCaberr);
+    if (pong.x < -999)
+        ping.x += 1;
 
-    vec3 color = vec3(0);
-    if (dTextMode > .5)
-    {
-        if (pong.a > 0.)
-            color = pong.rgb;
-        else
-            color = ping.rgb;
-    }
-    else
-    {
-        if (fbm(vec3(gl_FragCoord.xy * 0.01, uTime), 0.4, 4) > 0.8)
-            color = ping.rgb;
-        else
-            color = pong.rgb;
-    }
-    fragColor = vec4(color, 1);
+    fragColor = vec4(ping.rgb, 1.);
+
+    // vec3 color = vec3(0);
+    // if (dTextMode > .5)
+    // {
+    //     if (pong.a > 0.)
+    //         color = pong.rgb;
+    //     else
+    //         color = ping.rgb;
+    // }
+    // else
+    // {
+    //     if (fbm(vec3(gl_FragCoord.xy * 0.01, uTime), 0.4, 4) > 0.8)
+    //         color = ping.rgb;
+    //     else
+    //         color = pong.rgb;
+    // }
+    // fragColor = vec4(color, 1);
 }

@@ -16,5 +16,6 @@ void main()
     vec2 uv = gl_FragCoord.xy / uRes.xy;
     vec3 color = dColor + vec3(uv, 0.5 * sin(uTime) + 0.5);
 
-    fragColor = vec4(color, 1);
+    // fragColor = vec4(color, 1);
+    fragColor = vec4(1);
 }
