@@ -196,14 +196,16 @@ GLuint Shader::loadProgram(
     GLuint progID = glCreateProgram();
 
     // Load and attacth shaders
+    bool compileFailed = false;
     GLuint vertexShader = loadShader(vertPath, GL_VERTEX_SHADER);
     if (vertexShader == 0)
     {
         glDeleteProgram(progID);
         progID = 0;
-        return 0;
+        compileFailed = true;
     }
-    glAttachShader(progID, vertexShader);
+    else
+        glAttachShader(progID, vertexShader);
 
     GLuint geometryShader = 0;
     if (!geomPath.empty())
@@ -214,9 +216,10 @@ GLuint Shader::loadProgram(
             glDeleteShader(vertexShader);
             glDeleteProgram(progID);
             progID = 0;
-            return 0;
+            compileFailed = true;
         }
-        glAttachShader(progID, geometryShader);
+        else
+            glAttachShader(progID, geometryShader);
     }
 
     GLuint fragmentShader = loadShader(fragPath, GL_FRAGMENT_SHADER);
@@ -226,9 +229,13 @@ GLuint Shader::loadProgram(
         glDeleteShader(geometryShader);
         glDeleteProgram(progID);
         progID = 0;
-        return 0;
+        compileFailed = true;
     }
-    glAttachShader(progID, fragmentShader);
+    else
+        glAttachShader(progID, fragmentShader);
+
+    if (compileFailed)
+        return 0;
 
     // Link program
     glLinkProgram(progID);
