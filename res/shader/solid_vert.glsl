@@ -4,6 +4,7 @@
 #include "uniforms.glsl"
 
 uniform vec3 dCamTarget;
+uniform float dRadius;
 
 layout(std430, binding = 0) buffer DataT { uvec4 positionsSpeeds[]; }
 Data;
@@ -26,7 +27,7 @@ void main()
 
     particlePos = (viewMat * vec4(particlePos, 1.)).xyz;
 
-    float radius = .005;
+    float radius = 0.001 + .001 * dRadius;
 
     if (vertexIndex == 0 || vertexIndex == 3)
     {
@@ -49,7 +50,7 @@ void main()
         outCoord = vec2(-1, 1);
     }
 
-    mat4 clipMat = cameraToClip(radians(60), uRes, .1, 100.);
+    mat4 clipMat = cameraToClip(radians(30), uRes, .1, 100.);
 
     gl_Position = clipMat * vec4(particlePos, 1.);
 }

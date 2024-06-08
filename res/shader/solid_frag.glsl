@@ -2,7 +2,7 @@
 
 #include "uniforms.glsl"
 
-uniform vec3 dColor;
+uniform float dIntensity;
 
 // in vec3 inPosition;
 layout(location = 0) in vec2 inCoord;
@@ -17,7 +17,7 @@ void main()
 
     vec2 uv = gl_FragCoord.xy / uRes.xy;
     vec3 color = vec3(.5, .5, .6) + vec3(0, 0, 0.1 * sin(uTime) + .1);
-    color *= .1;
+    color *= dIntensity;
     float r = sqrt(dot(inCoord, inCoord));
     r = clamp(r, 0, 1);
     float fade = 1. - r;

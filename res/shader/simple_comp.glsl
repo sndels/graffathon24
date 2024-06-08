@@ -51,6 +51,9 @@ void main()
 
     // Flower cloud thing
     particleSpeed += -particlePos * gravity * fbm(particlePos * 3, .25, 5);
+    // particleSpeed.x += sin(uTime) * gravity * .1;
+    // particleSpeed.y += cos(uTime) * gravity * .1;
+    // particleSpeed.z += cos(uTime) * gravity * .1;
     // float speed = length(particleSpeed);
     // float speedScale = speed / (gravity * 10);
     // if (speedScale > 1)
