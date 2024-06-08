@@ -70,10 +70,13 @@ class Shader
 
   private:
     void setVendor();
+    // Strings by value because they come from the held vectors on reload() and
+    // loadProgram() will clear the vectors
     GLuint loadProgram(
-        const std::string &vertPath, const std::string &fragPath,
-        const std::string &geomPath);
-    GLuint loadProgram(const std::string &compPath);
+        std::string vertPath, std::string fragPath, std::string geomPath);
+    // Strings by value because they come from the held vectors on reload() and
+    // loadProgram() will clear the vectors
+    GLuint loadProgram(std::string compPath);
     GLuint loadShader(const std::string &mainPath, GLenum shaderType);
     void collectUniforms(GLuint progID);
     std::string parseFromFile(const std::string &filePath, GLenum shaderType);

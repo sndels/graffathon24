@@ -246,8 +246,7 @@ void Shader::setVendor()
 }
 
 GLuint Shader::loadProgram(
-    const std::string &vertPath, const std::string &fragPath,
-    const std::string &geomPath)
+    std::string vertPath, std::string fragPath, std::string geomPath)
 {
     // These will be refilled by loadShader so at least the root shader should
     // always remain afterwards.
@@ -333,7 +332,7 @@ GLuint Shader::loadProgram(
     return progID;
 }
 
-GLuint Shader::loadProgram(const std::string &compPath)
+GLuint Shader::loadProgram(std::string compPath)
 {
     // These will be refilled by loadShader so at least the root shader should
     // always remain afterwards.
