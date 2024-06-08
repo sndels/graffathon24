@@ -33,7 +33,7 @@ static struct sync_cb audioSync = {
 #define XRES 1920
 #define YRES 1080
 
-#define PARTICLE_COUNT (256 * 1'000)
+#define PARTICLE_COUNT (256 * 10'000)
 
 // TODO: Proper function?
 #define DRAW_PARTICLES()                                                       \

@@ -9,6 +9,9 @@ Data;
 layout(local_size_x = 256) in;
 void main()
 {
+    if (uTime < -1 || uRes.x < -1)
+        return;
+
     uint particleIndex = gl_GlobalInvocationID.x;
     // Should be initialized at the shader entrypoint e.g. as uvec3(px,
     // frameIndex)
