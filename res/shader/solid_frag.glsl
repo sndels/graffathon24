@@ -6,6 +6,7 @@ uniform float dIntensity;
 
 // in vec3 inPosition;
 layout(location = 0) in vec2 inCoord;
+layout(location = 1) in vec3 inColor;
 
 out vec4 outColor;
 
@@ -16,8 +17,8 @@ void main()
         discard;
 
     vec2 uv = gl_FragCoord.xy / uRes.xy;
-    vec3 color = vec3(.5, .5, .6) + vec3(0, 0, 0.1 * sin(uTime) + .1);
-    color *= dIntensity + 0.01;
+    vec3 color = +vec3(0, 0, 0.1 * sin(uTime) + .1);
+    color = inColor * dIntensity + 0.01;
     float r = sqrt(dot(inCoord, inCoord));
     r = clamp(r, 0, 1);
     float fade = 1. - r;
