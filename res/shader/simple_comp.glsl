@@ -22,7 +22,7 @@ vec2 scene(vec3 p)
 {
     vec2 h = vec2(INF);
 
-    p.z -= 1;
+    // p.z -= 1;
 
     {
         vec3 pp = p;
@@ -65,15 +65,11 @@ void main()
     // frameIndex)
     pcg_state = uvec3(particleIndex, uTime, 0);
 
-    // TODO:
-    // Pass in dt in addition to uTime and scale this
-    float gravity = .001;
-
     bool sdfScene = uTime > 30;
 
     vec3 particlePos = Data.particles[particleIndex].position.xyz;
     vec3 particleSpeed;
-    bool resetPositions = length(particlePos) == 0;
+    bool resetPositions = length(particlePos) == 0 || uTime < 7.2;
     // resetPositions = true;
     if (resetPositions || dReset)
     {
@@ -87,30 +83,30 @@ void main()
         }
         else
         {
-            // Don't include time when reseting to have the same starting state
+            // No time here to keep the reset state constant
             pcg_state = uvec3(particleIndex, 0, 0);
-            float startRadius = .5;
-            particlePos = rnd3d01() * startRadius * 2 - startRadius;
-            // particlePos.y *= .4;
-            int maxIter = 10;
-            while (length(particlePos) > startRadius && maxIter > 0)
-            {
-                particlePos = rnd3d01() * startRadius * 2 - startRadius;
-                maxIter--;
-            }
-            particlePos += -particlePos * .3 * fbm(particlePos * 3, .55, 5);
-            // vec3 fromOrigin = normalize(particlePos);
-            particleSpeed = particlePos * .1 * rnd01();
+            particlePos = rnd3d01() * 2 - 1;
+            while (length(particlePos) > 1)
+                particlePos = rnd3d01() * 2 - 1;
+            // particleSpeed += -particlePos * .8 * fbm(particlePos * 3, .25,
+            // 5);
+            particlePos += -particlePos * .7 * fbm(particlePos * 3, .25, 5);
+            particleSpeed = vec3(
+                sin(particlePos.y * 2) * sin(particlePos.z) * .01,
+                sin(particlePos.x) * .005, 0);
         }
     }
     else
         particleSpeed = Data.particles[particleIndex].speed.xyz;
 
     if (sdfScene)
-        particlePos += particleSpeed * 0.002;
+        particlePos += particleSpeed;
     else
         particlePos += particleSpeed;
 
+    // TODO:
+    // Pass in dt in addition to uTime and scale this
+    float gravity = .001;
     // Clamp to avoid acceleration exploding near origo
     float scale = .1;
 
@@ -126,15 +122,17 @@ void main()
     else
     {
         // Flower cloud thing
-        particleSpeed -= particlePos * gravity * fbm(particlePos * 5, .5, 5);
-        particleSpeed.x += sin(particlePos.x) * cos(uTime) * gravity * .01;
-        particleSpeed.y += sin(particlePos.y) * cos(uTime) * gravity * .01;
+        // Flower cloud thing
+        particleSpeed += -particlePos * gravity * fbm(particlePos * 3, .25, 5);
+        bool effu2 = true;
+        if (effu2)
+        {
+            particleSpeed.x += sin(uTime) * gravity * .1;
+        }
+        particleSpeed += (sin(particlePos.y) * scale - scale / 2) * gravity;
+        if (uTime > 21.1)
+            particleSpeed += (sin(particlePos.x) * scale - scale / 2) * gravity;
     }
-    // particleSpeed.z += cos(uTime) * gravity * .1;
-    // float speed = length(particleSpeed);
-    // float speedScale = speed / (gravity * 10);
-    // if (speedScale > 1)
-    //     particleSpeed /= speedScale;
 
     Data.particles[particleIndex].position = vec4(particlePos, 1.);
     Data.particles[particleIndex].speed = vec4(particleSpeed, 1.);

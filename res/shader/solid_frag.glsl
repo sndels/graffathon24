@@ -18,7 +18,7 @@ void main()
 
     vec2 uv = gl_FragCoord.xy / uRes.xy;
     vec3 color = +vec3(0, 0, 0.1 * sin(uTime) + .1);
-    color = inColor * dIntensity + 0.01;
+    color = inColor * (dIntensity + 1.0);
     float r = sqrt(dot(inCoord, inCoord));
     r = clamp(r, 0, 1);
     float fade = 1. - r;

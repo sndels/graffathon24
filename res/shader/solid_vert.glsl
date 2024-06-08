@@ -98,7 +98,7 @@ void main()
 
     particlePos = (viewMat * vec4(particlePos, 1.)).xyz;
 
-    float radius = 0.001 + .001 * dRadius;
+    float radius = 0.0018 + .001 * dRadius;
 
     if (vertexIndex == 0 || vertexIndex == 3)
     {
@@ -126,11 +126,25 @@ void main()
 
     gl_Position = clipMat * vec4(particlePos, 1.);
 
-    vec3 hsv0 = vec3(4.11, .9, .8);
-    // hue0.x = dHue0;
-    vec3 hsv1 = vec3(9.92, .9, .7);
-    // hue1.x = dHue1;
+    vec3 hsv0;
+    vec3 hsv1;
+    if (uTime < 14)
+    {
+        hsv0 = vec3(4.11, .85, .6);
+        hsv1 = vec3(4.11, .85, .6);
+    }
+    else if (uTime < 17.6)
+    {
+        hsv0 = vec3(4.11, .9, .8);
+        hsv1 = vec3(5.11, .9, .7);
+    }
+    else
+    {
+        hsv0 = vec3(4.11, .9, .8);
+        hsv1 = vec3(9.92, .9, .7);
+    }
+
     vec3 hsv =
-        mix(hsv0, hsv1, 1 - clamp(length(particleSpeed) * 800. - 4., 0, 1));
+        mix(hsv0, hsv1, 1 - clamp(length(particleSpeed) * 200. - 2., 0, 1));
     outColor = hsvToRgb(hsv);
 }
