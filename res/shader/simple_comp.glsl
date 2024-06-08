@@ -17,6 +17,7 @@ layout(std430, binding = 0) buffer DataT { Particle particles[]; }
 Data;
 
 uniform bool dReset;
+uniform float dMorph;
 
 vec2 scene(vec3 p)
 {
@@ -26,9 +27,18 @@ vec2 scene(vec3 p)
 
     {
         vec3 pp = p;
+        /*
+        */
+        pR(p.xz, uTime * 0.1);
         pR(pp.xz, uTime);
         pR(pp.yz, uTime);
-        float d = fBox(pp, vec3(0.3));
+        float b = fBox(pp, vec3(0.3));
+        float s0 = fSphere(p + vec3(0.5, 0.5 * sin(uTime), 0), 0.4);
+        float s1 = fSphere(p, 0.5);
+        float s2 = fSphere(p - vec3(0.6, 0, 0.5), 0.3);
+        float s = fOpUnionRound(fOpUnionRound(s0, s1, 0.2), s2, 0.2);
+        float d = mix(s, b, (sin(uTime * 0.5) + 1) * 0.5);
+        //float d = mix(s, b, dMorph);
         h = d < h.x ? vec2(d, 0) : h;
     }
 
@@ -71,7 +81,7 @@ void main()
     else
         particleSpeed = Data.particles[particleIndex].speed.xyz;
 
-    particlePos += particleSpeed * 0.001;
+    particlePos += particleSpeed * 0.002;
 
     // TODO:
     // Pass in dt in addition to uTime and scale this
