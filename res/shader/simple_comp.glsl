@@ -37,19 +37,33 @@ void main()
 
     particlePos += particleSpeed;
 
-    float gravity = .005;
+    // TODO:
+    // Pass in dt in addition to uTime and scale this
+    float gravity = .001;
     // Clamp to avoid acceleration exploding near origo
-    particleSpeed += -particlePos * gravity;
     float scale = .1;
-    // particleSpeed += (sin(particlePos.y) * scale - scale / 2) * gravity;
-    particleSpeed += (sin(particlePos.x) * scale - scale / 2) * gravity;
-    // particleSpeed += (sin(particlePos.z) * scale - scale / 2) * gravity;
-    particleSpeed += (rnd3d01() * .1 - .1) * gravity;
-    particleSpeed = min(particleSpeed, gravity * 10);
-    // particleSpeed += rnd3d01() * .1 - .05;
 
+    vec3 sink0 = vec3(-2, 0, 0);
+    vec3 sink1 = vec3(2, 0, 0);
+
+    // Flower cloud thing
+    particleSpeed += -particlePos * gravity * fbm(particlePos * 3, .25, 5);
+    // float speed = length(particleSpeed);
+    // float speedScale = speed / (gravity * 10);
+    // if (speedScale > 1)
+    //     particleSpeed /= speedScale;
+
+    // Kewl sheared cube thing
+    // particleSpeed += -particlePos * gravity;
+    // particleSpeed += (sin(particlePos.y) * scale - scale / 2) * gravity;
+    // particleSpeed = min(particleSpeed, gravity * 10);
+
+    // clang-format off
     Data.positionsSpeeds[particleIndex] = uvec4(
-        packHalf2x16(particlePos.xy), packHalf2x16(vec2(particlePos.z, 1.)),
+        packHalf2x16(particlePos.xy),
+        packHalf2x16(vec2(particlePos.z, 1.)),
         packHalf2x16(particleSpeed.xy),
-        packHalf2x16(vec2(particleSpeed.z, 1.)));
+        packHalf2x16(vec2(particleSpeed.z, 1.))
+    );
+    // clang-format on
 }
