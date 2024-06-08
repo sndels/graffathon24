@@ -6,6 +6,8 @@
 layout(std430, binding = 0) buffer DataT { uvec4 positionsSpeeds[]; }
 Data;
 
+uniform bool dReset;
+
 layout(local_size_x = 256) in;
 void main()
 {
@@ -23,7 +25,7 @@ void main()
     vec3 particleSpeed;
     bool resetPositions = length(particlePos) == 0;
     // resetPositions = true;
-    if (resetPositions)
+    if (resetPositions || dReset)
     {
         particlePos = rnd3d01() * 2 - 1;
         while (length(particlePos) > 1)
