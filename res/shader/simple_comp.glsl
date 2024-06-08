@@ -91,9 +91,10 @@ void main()
             // particleSpeed += -particlePos * .8 * fbm(particlePos * 3, .25,
             // 5);
             particlePos += -particlePos * .7 * fbm(particlePos * 3, .25, 5);
-            particleSpeed = vec3(
-                sin(particlePos.y * 2) * sin(particlePos.z) * .01,
-                sin(particlePos.x) * .005, 0);
+            particleSpeed =
+                0.1 * vec3(
+                          sin(particlePos.y * 2) * sin(particlePos.z) * .01,
+                          sin(particlePos.x) * .005, 0);
         }
     }
     else
@@ -119,12 +120,12 @@ void main()
             particleSpeed = reflect(particleSpeed, normal(particlePos));
         }
     }
-    else
+    else if (uTime > 15)
     {
-        // Flower cloud thing
         // Flower cloud thing
         particleSpeed += -particlePos * gravity * fbm(particlePos * 3, .25, 5);
         bool effu2 = true;
+        effu2 = false;
         if (effu2)
         {
             particleSpeed.x += sin(uTime) * gravity * .1;

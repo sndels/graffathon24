@@ -98,7 +98,7 @@ void main()
 
     particlePos = (viewMat * vec4(particlePos, 1.)).xyz;
 
-    float radius = 0.0018 + .001 * dRadius;
+    float radius = 0.0035 + .001 * dRadius;
 
     if (vertexIndex == 0 || vertexIndex == 3)
     {
@@ -128,12 +128,12 @@ void main()
 
     vec3 hsv0;
     vec3 hsv1;
-    if (uTime < 14)
+    if (uTime < 21)
     {
         hsv0 = vec3(4.11, .85, .6);
         hsv1 = vec3(4.11, .85, .6);
     }
-    else if (uTime < 17.6)
+    else if (uTime < 22)
     {
         hsv0 = vec3(4.11, .9, .8);
         hsv1 = vec3(5.11, .9, .7);
