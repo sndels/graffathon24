@@ -13,7 +13,6 @@
 #include "shader.hpp"
 #include "timer.hpp"
 #include "window.hpp"
-#include <cassert>
 #include <cstdio>
 
 // Comment out to compile in demo-mode, so close when music stops etc.
@@ -58,6 +57,8 @@ static struct sync_cb audioSync = {
         shader.setFloat("uTime", currentTimeS);                                \
         shader.setVec2(                                                        \
             "uRes", (GLfloat)window.width(), (GLfloat)window.height());        \
+        shader.setFloat(                                                       \
+            "uAspectRatio", (GLfloat)window.width()/(GLfloat)window.height()); \
     }                                                                          \
     while (0)
 
@@ -70,6 +71,8 @@ static struct sync_cb audioSync = {
             gui.useSliderTime() ? gui.sliderTime() : globalTime.getSeconds()); \
         shader.setVec2(                                                        \
             "uRes", (GLfloat)window.width(), (GLfloat)window.height());        \
+        shader.setFloat(                                                       \
+            "uAspectRatio", (GLfloat)window.width()/(GLfloat)window.height()); \
     } while (0)
 #endif // DEMO_MODE
 
@@ -316,6 +319,18 @@ int main(int argc, char *argv[])
         {
             scenePingProf.startSample();
             sceneShaders[overrideIndex].bind(syncRow);
+            sceneShaders[overrideIndex].setFloat(
+                "uTime",
+#ifdef DEMO_MODE
+                currentTimeS
+#else  // DEMO_NODE
+                gui.useSliderTime() ? gui.sliderTime() : globalTime.getSeconds()
+#endif // DEMO_MODE
+            );
+            sceneShaders[overrideIndex].setVec2(
+                "uRes", (GLfloat)window.width(), (GLfloat)window.height());
+            sceneShaders[overrideIndex].setFloat(
+                "uAspectRatio", (GLfloat)window.width() / (GLfloat)window.height());
             UPDATE_COMMON_UNIFORMS(sceneShaders[overrideIndex]);
             if (overrideIndex != 3)
                 q.render();

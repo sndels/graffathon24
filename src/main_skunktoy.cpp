@@ -63,6 +63,8 @@ int main()
         shader.setVec2(
             "uRes", (GLfloat)window.width(), (GLfloat)window.height());
         q.render();
+        shader.setFloat(
+            "uAspectRatio", (GLfloat)window.width() / (GLfloat)window.height());
         sceneProf.endSample();
 
         if (window.drawGUI())
