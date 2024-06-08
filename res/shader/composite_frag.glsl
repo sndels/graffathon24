@@ -1,4 +1,4 @@
-#version 410
+#version 430
 
 #include "noise.glsl"
 #include "uniforms.glsl"

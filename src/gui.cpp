@@ -27,7 +27,7 @@ void GUI::init(SDL_Window *window, SDL_GLContext context)
     IMGUI_CHECKVERSION();
     ImGui::CreateContext();
     ImGui_ImplSDL2_InitForOpenGL(_window, context);
-    ImGui_ImplOpenGL3_Init("#version 410");
+    ImGui_ImplOpenGL3_Init("#version 430");
 
     ImGui::StyleColorsDark();
     ImGui::GetStyle().WindowRounding = 0.0f;

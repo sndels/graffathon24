@@ -1,4 +1,4 @@
-#version 410
+#version 430
 
 #include "hg_sdf.glsl"
 #include "uniforms.glsl"
