@@ -15,6 +15,7 @@ enum class UniformType
 {
     Bool,
     Float,
+    Int,
     Vec2,
     Vec3
 };
@@ -67,6 +68,7 @@ class Shader
 #endif // ROCKET
     bool reload();
     void setFloat(const std::string &name, GLfloat value);
+    void setInt(const std::string &name, GLint value);
     void setVec2(const std::string &name, GLfloat x, GLfloat y);
     GLint getUniformLocation(const std::string &name) const;
     std::unordered_map<std::string, Uniform> &dynamicUniforms();
