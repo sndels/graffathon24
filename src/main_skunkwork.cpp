@@ -53,7 +53,7 @@ static struct sync_cb audioSync = {
 #ifdef DEMO_MODE
 
 #define UPDATE_COMMON_UNIFORMS(shader)                                         \
-    shader.setFloat("uTime", currentTimeS) do                                  \
+    do                                                                         \
     {                                                                          \
         shader.setFloat("uTime", currentTimeS);                                \
         shader.setVec2(                                                        \
@@ -303,6 +303,7 @@ int main(int argc, char *argv[])
         // TODO: No need to reset before switch back
         if (gui.useSliderTime())
             globalTime.reset();
+#endif //! DEMO_MODE
 
         {
             computeProf.startSample();
@@ -322,6 +323,7 @@ int main(int argc, char *argv[])
             computeProf.endSample();
         }
 
+#ifndef DEMO_MODE
         if (overrideIndex >= 0)
         {
             scenePingProf.startSample();

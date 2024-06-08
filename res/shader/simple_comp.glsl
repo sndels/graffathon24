@@ -17,7 +17,7 @@ uniform bool dReset;
 layout(local_size_x = 256) in;
 void main()
 {
-    if (uTime < -1 || uRes.x < -1)
+    if (uTime < -1 || uRes.x < -1 || uAspectRatio < -1)
         return;
 
     uint particleIndex = gl_GlobalInvocationID.x;

@@ -41,7 +41,7 @@ uniform float dTextMode;
 void main()
 {
     // Avoid nags if these aren't used
-    if (uTime < -1 || uRes.x < -1)
+    if (uTime < -1 || uRes.x < -1 || uAspectRatio < -1)
         discard;
 
     vec4 ping = sampleSource(uScenePingColorDepth, dCaberr);

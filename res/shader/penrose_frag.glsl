@@ -18,7 +18,7 @@ out vec4 fragColor;
 void main()
 {
     // Avoid nags if these aren't used
-    if (uTime < -1 || uRes.x < -1)
+    if (uTime < -1 || uRes.x < -1 || uAspectRatio < -1)
         discard;
 
     vec2 p = (gl_FragCoord.xy*2.0) / uRes.yy - vec2(uAspectRatio, 1.0);
