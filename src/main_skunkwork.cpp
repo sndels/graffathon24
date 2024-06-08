@@ -159,6 +159,7 @@ int main(int argc, char *argv[])
         RES_DIRECTORY "shader/ray_marching_frag.glsl");
     sceneShaders.emplace_back(
         "Text", rocket, vertPath, RES_DIRECTORY "shader/text_frag.glsl");
+    int solidShaderId = sceneShaders.size();
     sceneShaders.emplace_back(
         "Solid", rocket, RES_DIRECTORY "shader/solid_vert.glsl",
         RES_DIRECTORY "shader/solid_frag.glsl");
@@ -264,7 +265,7 @@ int main(int argc, char *argv[])
         int32_t pongIndex = std::clamp(
             (int32_t)(float)sync_get_val(pongScene, syncRow), 0,
             (int32_t)sceneShaders.size() - 1);
-        pingIndex = 3;
+        pingIndex = solidShaderId;
         pongIndex = 1;
 
         glClearColor(0.f, 0.f, 0.f, 1.f);
@@ -348,7 +349,7 @@ int main(int argc, char *argv[])
                 "uRes", (GLfloat)window.width(), (GLfloat)window.height());
             sceneShaders[overrideIndex].setFloat(
                 "uAspectRatio", (GLfloat)window.width() / (GLfloat)window.height());
-            if (overrideIndex != 3)
+            if (overrideIndex != solidShaderId)
                 q.render();
             else
                 DRAW_PARTICLES();
@@ -361,7 +362,7 @@ int main(int argc, char *argv[])
             sceneShaders[pingIndex].bind(syncRow);
             scenePingFbo.bindWrite();
             UPDATE_COMMON_UNIFORMS(sceneShaders[pingIndex]);
-            if (pingIndex != 3)
+            if (pingIndex != solidShaderId)
                 q.render();
             else
                 DRAW_PARTICLES();
@@ -373,7 +374,7 @@ int main(int argc, char *argv[])
             sceneShaders[pongIndex].bind(syncRow);
             scenePongFbo.bindWrite();
             UPDATE_COMMON_UNIFORMS(sceneShaders[pongIndex]);
-            if (pongIndex != 3)
+            if (pongIndex != solidShaderId)
                 q.render();
             else
                 DRAW_PARTICLES();
