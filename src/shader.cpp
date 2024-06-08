@@ -39,6 +39,7 @@ std::string toString(UniformType type)
 } // namespace
 
 #ifdef ROCKET
+
 Shader::Shader(
     const std::string &name, sync_device *rocket, const std::string &vertPath,
     const std::string &fragPath, const std::string &geomPath)
@@ -51,7 +52,21 @@ Shader::Shader(
     if (progID != 0)
         _progID = progID;
 }
+
+Shader::Shader(
+    const std::string &name, sync_device *rocket, const std::string &compPath)
+: _progID(0)
+, _name(name)
+, _rocket(rocket)
+{
+    setVendor();
+    GLuint progID = loadProgram(compPath);
+    if (progID != 0)
+        _progID = progID;
+}
+
 #else
+
 Shader::Shader(
     const std::string &name, const std::string &vertPath,
     const std::string &fragPath, const std::string &geomPath)
@@ -63,6 +78,17 @@ Shader::Shader(
     if (progID != 0)
         _progID = progID;
 }
+
+Shader::Shader(const std::string &name, const std::string &compPath)
+: _progID(0)
+, _name(name)
+{
+    setVendor();
+    GLuint progID = loadProgram(compPath);
+    if (progID != 0)
+        _progID = progID;
+}
+
 #endif // ROCKET
 
 Shader::~Shader() { glDeleteProgram(_progID); }
@@ -74,9 +100,11 @@ Shader::Shader(Shader &&other)
 , _vertPaths(other._vertPaths)
 , _fragPaths(other._fragPaths)
 , _geomPaths(other._geomPaths)
+, _compPaths(other._compPaths)
 , _vertMods(other._vertMods)
 , _fragMods(other._fragMods)
 , _geomMods(other._geomMods)
+, _compMods(other._compMods)
 , _uniforms(other._uniforms)
 , _dynamicUniforms(other._dynamicUniforms)
 , _name(other._name)
@@ -92,8 +120,10 @@ Shader::Shader(Shader &&other)
 , _vertPaths(other._vertPaths)
 , _fragPaths(other._fragPaths)
 , _geomPaths(other._geomPaths)
+, _compPaths(other._compPaths)
 , _vertMods(other._vertMods)
 , _fragMods(other._fragMods)
+, _compMods(other._compMods)
 , _geomMods(other._geomMods)
 , _uniforms(other._uniforms)
 , _dynamicUniforms(other._dynamicUniforms)
@@ -119,6 +149,27 @@ void Shader::bind()
 
 bool Shader::reload()
 {
+    if (!_compPaths.empty())
+    {
+        for (auto i = 0u; i < _compPaths.size(); ++i)
+        {
+            std::string const &path = _compPaths[i];
+            if (_compMods[i] != getMod(path))
+            {
+                // First path is the root file
+                GLuint progID = loadProgram(_compPaths[0]);
+                if (progID != 0)
+                {
+                    glDeleteProgram(_progID);
+                    _progID = progID;
+                    return false;
+                }
+                return true;
+            }
+        }
+        return false;
+    }
+
     auto fn = [&](std::vector<std::string> const &paths,
                   std::vector<time_t> const &mods) -> bool
     {
@@ -249,6 +300,8 @@ GLuint Shader::loadProgram(
     else
         glAttachShader(progID, fragmentShader);
 
+    // Only return after trying all the shaders so that we refill tracking for
+    // all of them even if the first couldn't compile
     if (compileFailed)
         return 0;
 
@@ -273,6 +326,61 @@ GLuint Shader::loadProgram(
     glDeleteShader(geometryShader);
     glDeleteShader(fragmentShader);
 
+    collectUniforms(progID);
+
+    printf("[shader] Shader %s loaded\n", fragPath.c_str());
+
+    return progID;
+}
+
+GLuint Shader::loadProgram(const std::string &compPath)
+{
+    // These will be refilled by loadShader so at least the root shader should
+    // always remain afterwards.
+    _compPaths.clear();
+    _compMods.clear();
+
+    // Get a program id
+    GLuint progID = glCreateProgram();
+
+    // Load and attacth shaders
+    bool compileFailed = false;
+    GLuint shader = loadShader(compPath, GL_COMPUTE_SHADER);
+    if (shader == 0)
+    {
+        glDeleteProgram(progID);
+        progID = 0;
+        return false;
+    }
+    else
+        glAttachShader(progID, shader);
+
+    // Link program
+    glLinkProgram(progID);
+    GLint programSuccess = GL_FALSE;
+    glGetProgramiv(progID, GL_LINK_STATUS, &programSuccess);
+    if (programSuccess == GL_FALSE)
+    {
+        printf("[shader] Error linking program %u\n", progID);
+        printf("[shader] Error code: %d", programSuccess);
+        printProgramLog(progID);
+        glDeleteShader(shader);
+        glDeleteProgram(progID);
+        progID = 0;
+        return 0;
+    }
+
+    glDeleteShader(shader);
+
+    collectUniforms(progID);
+
+    printf("[shader] Shader %s loaded\n", compPath.c_str());
+
+    return progID;
+}
+
+void Shader::collectUniforms(GLuint progID)
+{
     // Query uniforms
     GLint uCount;
     glGetProgramiv(progID, GL_ACTIVE_UNIFORMS, &uCount);
@@ -375,10 +483,6 @@ GLuint Shader::loadProgram(
 #ifdef ROCKET
     _rocketUniforms = newRockets;
 #endif // ROCKET
-
-    printf("[shader] Shader %s loaded\n", fragPath.c_str());
-
-    return progID;
 }
 
 GLuint Shader::loadShader(const std::string &mainPath, GLenum shaderType)
@@ -422,11 +526,18 @@ std::string Shader::parseFromFile(
             _vertPaths.emplace_back(filePath);
             _vertMods.emplace_back(getMod(filePath));
         }
-        else
+        else if (shaderType == GL_GEOMETRY_SHADER)
         {
             _geomPaths.emplace_back(filePath);
             _geomMods.emplace_back(getMod(filePath));
         }
+        else if (shaderType == GL_COMPUTE_SHADER)
+        {
+            _compPaths.emplace_back(filePath);
+            _compMods.emplace_back(getMod(filePath));
+        }
+        else
+            assert(!"Unexpected shader type");
 
         // Get directory path for the file for possible includes
         std::string dirPath(filePath);

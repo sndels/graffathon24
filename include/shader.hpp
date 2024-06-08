@@ -40,10 +40,14 @@ class Shader
         const std::string &name, sync_device *rocket,
         const std::string &vertPath, const std::string &fragPath,
         const std::string &geomPath = "");
+    Shader(
+        const std::string &name, sync_device *rocket,
+        const std::string &compPath);
 #else
     Shader(
         const std::string &name, const std::string &vertPath,
         const std::string &fragPath, const std::string &geomPath = "");
+    Shader(const std::string &name, const std::string &compPath);
 #endif // ROCKET
 
     ~Shader();
@@ -69,7 +73,9 @@ class Shader
     GLuint loadProgram(
         const std::string &vertPath, const std::string &fragPath,
         const std::string &geomPath);
+    GLuint loadProgram(const std::string &compPath);
     GLuint loadShader(const std::string &mainPath, GLenum shaderType);
+    void collectUniforms(GLuint progID);
     std::string parseFromFile(const std::string &filePath, GLenum shaderType);
     void printProgramLog(GLuint program) const;
     void printShaderLog(GLuint shader) const;
@@ -85,9 +91,11 @@ class Shader
     std::vector<std::string> _vertPaths;
     std::vector<std::string> _fragPaths;
     std::vector<std::string> _geomPaths;
+    std::vector<std::string> _compPaths;
     std::vector<time_t> _vertMods;
     std::vector<time_t> _fragMods;
     std::vector<time_t> _geomMods;
+    std::vector<time_t> _compMods;
     std::unordered_map<std::string, std::pair<UniformType, GLint>> _uniforms;
     std::unordered_map<std::string, Uniform> _dynamicUniforms;
     std::string _name;
