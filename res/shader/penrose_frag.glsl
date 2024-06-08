@@ -1,11 +1,17 @@
-#version 410
+#version 430
 
 #include "hg_sdf.glsl"
 #include "uniforms.glsl"
 
 uniform vec3 dColor;
 
-uniform vec2 points[3] = {{1.0, 0.0}, {0.0, 0.5}, {0.5, 1.0}};
+
+struct PenroseTriangle {
+    vec2    p;
+};
+
+layout(std430, binding = 0) buffer Triangles { PenroseTriangle data[]; } triangles;
+uniform int nTriangles;
 
 out vec4 fragColor;
 
@@ -21,9 +27,14 @@ void main()
     vec2 diff;
     float disSqr = 0.0;
     float minDisSqr = 100.0;
-    for (int i=0; i<3; ++i) {
-        diff = points[i]-p;
+    for (int i=0; i<nTriangles; ++i) {
+        diff = triangles.data[i].p-p;
         disSqr = dot(diff, diff);
+        if (disSqr < 0.0001) {
+            fragColor = vec4(0.0, 0.0, 0.0, 1.0);
+            return;
+        }
+
         if (disSqr < minDisSqr) {
             minDisSqr = disSqr;
             pId = i;

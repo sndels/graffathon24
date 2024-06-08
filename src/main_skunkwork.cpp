@@ -9,6 +9,7 @@
 #include "frameBuffer.hpp"
 #include "gpuProfiler.hpp"
 #include "gui.hpp"
+#include "penroseTriangles.hpp"
 #include "quad.hpp"
 #include "shader.hpp"
 #include "timer.hpp"
@@ -150,6 +151,7 @@ int main(int argc, char *argv[])
     std::vector<Shader> sceneShaders;
     sceneShaders.emplace_back(
         "Basic", rocket, vertPath, RES_DIRECTORY "shader/basic_frag.glsl");
+    int penroseShaderId = sceneShaders.size();
     sceneShaders.emplace_back(
         "Penrose", rocket, vertPath, RES_DIRECTORY "shader/penrose_frag.glsl");
     sceneShaders.emplace_back(
@@ -220,6 +222,8 @@ int main(int argc, char *argv[])
             zeros.data(), GL_DYNAMIC_DRAW);
     }
     glBindBuffer(GL_SHADER_STORAGE_BUFFER, 0);
+
+    PenroseTriangles penroseTriangles;
 
     // Run the main loop
     while (window.open())
@@ -321,6 +325,17 @@ int main(int argc, char *argv[])
         {
             scenePingProf.startSample();
             sceneShaders[overrideIndex].bind(syncRow);
+            if (overrideIndex == penroseShaderId)
+            {
+                penroseTriangles.update(
+#ifdef DEMO_MODE
+                    currentTimeS
+#else  // DEMO_NODE
+                    gui.useSliderTime() ? gui.sliderTime() : globalTime.getSeconds()
+#endif // DEMO_MODE
+                );
+                penroseTriangles.bind(&sceneShaders[overrideIndex]);
+            }
             sceneShaders[overrideIndex].setFloat(
                 "uTime",
 #ifdef DEMO_MODE
