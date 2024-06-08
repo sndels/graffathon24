@@ -122,7 +122,7 @@ void main()
     }
 
     float fov = radians(100);
-    mat4 clipMat = cameraToClip(fov, uRes, .2, 100.);
+    mat4 clipMat = cameraToClip(fov, uRes, .1, 100.);
 
     gl_Position = clipMat * vec4(particlePos, 1.);
 

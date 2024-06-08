@@ -32,7 +32,11 @@ vec2 scene(vec3 p)
         pR(pp.xz, uTime * 0.5);
         pR(pp.yz, uTime * 0.5);
         float b = fBox(pp, vec3(0.3));
-        float s0 = fSphere(p + vec3(0.2 + sin(uTime * 0.8) * .5, 0.5 * sin(uTime * 0.7) * 1.2, 0), 0.3);
+        float s0 = fSphere(
+            p + vec3(
+                    0.2 + sin(uTime * 0.8) * .5, 0.5 * sin(uTime * 0.7) * 1.2,
+                    0),
+            0.3);
         float s1 = fSphere(p, 0.5);
         float s2 = fSphere(p - vec3(0.3, 0, 0.5), 0.2);
         float s = fOpUnionRound(fOpUnionRound(s0, s1, 0.1), s2, 0.1);
@@ -65,7 +69,7 @@ void main()
     // frameIndex)
     pcg_state = uvec3(particleIndex, uTime, 0);
 
-    bool sdfScene = uTime > 30;
+    bool sdfScene = (uTime > 30 && uTime < 45) || uTime > 52.6;
 
     vec3 particlePos = Data.particles[particleIndex].position.xyz;
     vec3 particleSpeed;
@@ -77,8 +81,12 @@ void main()
         {
             particlePos = rnd3d01() * 0.5;
             // particlePos = vec3(0);
-            while (length(particlePos) > 1)
+            int maxIter = 10;
+            while (length(particlePos) > 1 && maxIter > 0)
+            {
                 particlePos = rnd3d01() * 2 - 1;
+                maxIter--;
+            }
             particleSpeed = (rnd3d01() - 0.5) * 10;
         }
         else
@@ -86,8 +94,12 @@ void main()
             // No time here to keep the reset state constant
             pcg_state = uvec3(particleIndex, 0, 0);
             particlePos = rnd3d01() * 2 - 1;
-            while (length(particlePos) > 1)
+            int maxIter = 10;
+            while (length(particlePos) > 1.2 && maxIter > 0)
+            {
                 particlePos = rnd3d01() * 2 - 1;
+                maxIter--;
+            }
             // particleSpeed += -particlePos * .8 * fbm(particlePos * 3, .25,
             // 5);
             particlePos += -particlePos * .7 * fbm(particlePos * 3, .25, 5);
@@ -108,6 +120,8 @@ void main()
     // TODO:
     // Pass in dt in addition to uTime and scale this
     float gravity = .001;
+    if (uTime > 45)
+        gravity *= 4;
     // Clamp to avoid acceleration exploding near origo
     float scale = .1;
 
@@ -118,25 +132,35 @@ void main()
              0))
         {
 #if 1
-            particleSpeed = 0.9999 * reflect(particleSpeed, normal(particlePos)) +
-                            0.0001 * -normal(particlePos);
+            particleSpeed =
+                0.9999 * reflect(particleSpeed, normal(particlePos)) +
+                0.0001 * -normal(particlePos);
 #else
-            particleSpeed = mix(reflect(particleSpeed, normal(particlePos)),
-                                -normal(particlePos), 0.0);
+            particleSpeed =
+                mix(reflect(particleSpeed, normal(particlePos)),
+                    -normal(particlePos), 0.0);
 #endif
         }
     }
     else if (uTime > 15)
     {
         // Flower cloud thing
-        particleSpeed += -particlePos * gravity * fbm(particlePos * 3, .25, 5);
-        bool effu2 = true;
-        effu2 = false;
-        if (effu2)
+        if (uTime < 45)
         {
+            particleSpeed +=
+                -particlePos * gravity * fbm(particlePos * 3, .25, 5);
+            particleSpeed += (sin(particlePos.y) * scale - scale / 2) * gravity;
+        }
+        else if (uTime < 45.4)
+            particleSpeed +=
+                particlePos * gravity * .5 * fbm(particlePos * 20, .85, 5);
+        else
+        {
+            particleSpeed +=
+                -particlePos * gravity * fbm(particlePos * 3, .25, 5);
+            particleSpeed += (sin(particlePos.y) * scale - scale / 2) * gravity;
             particleSpeed.x += sin(uTime) * gravity * .1;
         }
-        particleSpeed += (sin(particlePos.y) * scale - scale / 2) * gravity;
         if (uTime > 21.1)
             particleSpeed += (sin(particlePos.x) * scale - scale / 2) * gravity;
     }
