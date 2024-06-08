@@ -29,14 +29,14 @@ vec2 scene(vec3 p)
         /*
          */
         pR(p.xz, uTime * 0.1);
-        pR(pp.xz, uTime);
-        pR(pp.yz, uTime);
+        pR(pp.xz, uTime * 0.5);
+        pR(pp.yz, uTime * 0.5);
         float b = fBox(pp, vec3(0.3));
-        float s0 = fSphere(p + vec3(0.5, 0.5 * sin(uTime), 0), 0.4);
+        float s0 = fSphere(p + vec3(0.2 + sin(uTime * 0.8) * .5, 0.5 * sin(uTime * 0.7) * 1.2, 0), 0.3);
         float s1 = fSphere(p, 0.5);
-        float s2 = fSphere(p - vec3(0.6, 0, 0.5), 0.3);
-        float s = fOpUnionRound(fOpUnionRound(s0, s1, 0.2), s2, 0.2);
-        float d = mix(s, b, (sin(uTime * 0.5) + 1) * 0.5);
+        float s2 = fSphere(p - vec3(0.3, 0, 0.5), 0.2);
+        float s = fOpUnionRound(fOpUnionRound(s0, s1, 0.1), s2, 0.1);
+        float d = mix(s, b, (sin(uTime * 0.2) + 1) * 0.5);
         // float d = mix(s, b, dMorph);
         h = d < h.x ? vec2(d, 0) : h;
     }
@@ -101,7 +101,7 @@ void main()
         particleSpeed = Data.particles[particleIndex].speed.xyz;
 
     if (sdfScene)
-        particlePos += particleSpeed;
+        particlePos += particleSpeed * 1.9;
     else
         particlePos += particleSpeed;
 
@@ -117,7 +117,13 @@ void main()
             (dot(particleSpeed / length(particleSpeed), normal(particlePos)) >=
              0))
         {
-            particleSpeed = reflect(particleSpeed, normal(particlePos));
+#if 1
+            particleSpeed = 0.9999 * reflect(particleSpeed, normal(particlePos)) +
+                            0.0001 * -normal(particlePos);
+#else
+            particleSpeed = mix(reflect(particleSpeed, normal(particlePos)),
+                                -normal(particlePos), 0.0);
+#endif
         }
     }
     else if (uTime > 15)
