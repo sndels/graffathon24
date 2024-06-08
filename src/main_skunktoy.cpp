@@ -21,9 +21,9 @@ int main()
 
     // Set up scene
     std::string vertPath(RES_DIRECTORY);
-    vertPath += "shader/basic_vert.glsl";
+    vertPath += "shader/penrose_vert.glsl";
     std::string fragPath(RES_DIRECTORY);
-    fragPath += "shader/basic_frag.glsl";
+    fragPath += "shader/penrose_frag.glsl";
     Shader shader("Shader", vertPath, fragPath, "");
 
     Timer reloadTime;

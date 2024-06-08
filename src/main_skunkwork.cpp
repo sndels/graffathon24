@@ -32,7 +32,7 @@ static struct sync_cb audioSync = {
 #define XRES 1920
 #define YRES 1080
 
-#define PARTICLE_COUNT (256 * 5'000)
+#define PARTICLE_COUNT (256 * 1'000)
 
 // TODO: Proper function?
 #define DRAW_PARTICLES()                                                       \
@@ -150,6 +150,8 @@ int main(int argc, char *argv[])
     std::vector<Shader> sceneShaders;
     sceneShaders.emplace_back(
         "Basic", rocket, vertPath, RES_DIRECTORY "shader/basic_frag.glsl");
+    sceneShaders.emplace_back(
+        "Penrose", rocket, vertPath, RES_DIRECTORY "shader/penrose_frag.glsl");
     sceneShaders.emplace_back(
         "RayMarch", rocket, vertPath,
         RES_DIRECTORY "shader/ray_marching_frag.glsl");
@@ -331,7 +333,6 @@ int main(int argc, char *argv[])
                 "uRes", (GLfloat)window.width(), (GLfloat)window.height());
             sceneShaders[overrideIndex].setFloat(
                 "uAspectRatio", (GLfloat)window.width() / (GLfloat)window.height());
-            UPDATE_COMMON_UNIFORMS(sceneShaders[overrideIndex]);
             if (overrideIndex != 3)
                 q.render();
             else
