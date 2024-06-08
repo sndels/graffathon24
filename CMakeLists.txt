@@ -61,7 +61,7 @@ target_include_directories(skunkwork
 target_link_libraries(skunkwork
     PRIVATE
     ${OPENGL_LIBRARIES}
-    Eigen3::Eigen
+    eigen
     glm
     libgl3w
     librocket
