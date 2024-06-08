@@ -60,3 +60,5 @@ if(MSVC)
         ws2_32.lib
     )
 endif()
+
+add_subdirectory(eigen)
