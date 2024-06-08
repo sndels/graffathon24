@@ -82,8 +82,12 @@ class Shader
 
     GLuint _progID;
     Vendor _vendor;
-    std::vector<std::vector<std::string>> _filePaths;
-    std::vector<std::vector<time_t>> _fileMods;
+    std::vector<std::string> _vertPaths;
+    std::vector<std::string> _fragPaths;
+    std::vector<std::string> _geomPaths;
+    std::vector<time_t> _vertMods;
+    std::vector<time_t> _fragMods;
+    std::vector<time_t> _geomMods;
     std::unordered_map<std::string, std::pair<UniformType, GLint>> _uniforms;
     std::unordered_map<std::string, Uniform> _dynamicUniforms;
     std::string _name;

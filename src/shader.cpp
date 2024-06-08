@@ -1,12 +1,12 @@
 #include "shader.hpp"
 
+#include <cassert>
+#include <cstdio>
 #include <cstring>
 #include <fstream>
 #include <sstream>
 #include <stack>
 #include <sys/stat.h>
-
-#include <cstdio>
 
 namespace
 {
@@ -43,8 +43,6 @@ Shader::Shader(
     const std::string &name, sync_device *rocket, const std::string &vertPath,
     const std::string &fragPath, const std::string &geomPath)
 : _progID(0)
-, _filePaths(3)
-, _fileMods(3)
 , _name(name)
 , _rocket(rocket)
 {
@@ -58,8 +56,6 @@ Shader::Shader(
     const std::string &name, const std::string &vertPath,
     const std::string &fragPath, const std::string &geomPath)
 : _progID(0)
-, _filePaths(3)
-, _fileMods(3)
 , _name(name)
 {
     setVendor();
@@ -75,8 +71,12 @@ Shader::~Shader() { glDeleteProgram(_progID); }
 Shader::Shader(Shader &&other)
 : _progID(other._progID)
 , _vendor(other._vendor)
-, _filePaths(other._filePaths)
-, _fileMods(other._fileMods)
+, _vertPaths(other._vertPaths)
+, _fragPaths(other._fragPaths)
+, _geomPaths(other._geomPaths)
+, _vertMods(other._vertMods)
+, _fragMods(other._fragMods)
+, _geomMods(other._geomMods)
 , _uniforms(other._uniforms)
 , _dynamicUniforms(other._dynamicUniforms)
 , _name(other._name)
@@ -89,8 +89,12 @@ Shader::Shader(Shader &&other)
 Shader::Shader(Shader &&other)
 : _progID(other._progID)
 , _vendor(other._vendor)
-, _filePaths(other._filePaths)
-, _fileMods(other._fileMods)
+, _vertPaths(other._vertPaths)
+, _fragPaths(other._fragPaths)
+, _geomPaths(other._geomPaths)
+, _vertMods(other._vertMods)
+, _fragMods(other._fragMods)
+, _geomMods(other._geomMods)
 , _uniforms(other._uniforms)
 , _dynamicUniforms(other._dynamicUniforms)
 {
@@ -115,17 +119,19 @@ void Shader::bind()
 
 bool Shader::reload()
 {
-    // Reload shaders if some was modified
-    for (auto j = 0u; j < 3; ++j)
+    auto fn = [&](std::vector<std::string> const &paths,
+                  std::vector<time_t> const &mods) -> bool
     {
-        for (auto i = 0u; i < _filePaths[j].size(); ++i)
+        for (auto i = 0u; i < paths.size(); ++i)
         {
-            if (_fileMods[j][i] != getMod(_filePaths[j][i]))
+            std::string const &path = paths[i];
+            if (mods[i] != getMod(path))
             {
+                // First path is the root file
                 GLuint progID = loadProgram(
-                    _filePaths[1].size() > 0 ? _filePaths[1][0] : "",
-                    _filePaths[0].size() > 0 ? _filePaths[0][0] : "",
-                    _filePaths[2].size() > 0 ? _filePaths[2][0] : "");
+                    !_vertPaths.empty() ? _vertPaths[0] : "",
+                    !_fragPaths.empty() ? _fragPaths[0] : "",
+                    !_geomPaths.empty() ? _geomPaths[0] : "");
                 if (progID != 0)
                 {
                     glDeleteProgram(_progID);
@@ -135,8 +141,14 @@ bool Shader::reload()
                 return true;
             }
         }
-    }
-    return false;
+        return false;
+    };
+
+    bool reloaded = fn(_fragPaths, _fragMods);
+    reloaded |= fn(_vertPaths, _vertMods);
+    reloaded |= fn(_geomPaths, _geomMods);
+
+    return reloaded;
 }
 
 std::unordered_map<std::string, Uniform> &Shader::dynamicUniforms()
@@ -186,11 +198,14 @@ GLuint Shader::loadProgram(
     const std::string &vertPath, const std::string &fragPath,
     const std::string &geomPath)
 {
-    // Clear vectors
-    for (auto &v : _filePaths)
-        v.clear();
-    for (auto &v : _fileMods)
-        v.clear();
+    // These will be refilled by loadShader so at least the root shader should
+    // always remain afterwards.
+    _vertPaths.clear();
+    _fragPaths.clear();
+    _geomPaths.clear();
+    _vertMods.clear();
+    _fragMods.clear();
+    _geomMods.clear();
 
     // Get a program id
     GLuint progID = glCreateProgram();
@@ -399,18 +414,18 @@ std::string Shader::parseFromFile(
         // Push filepath and timestamp to vectors
         if (shaderType == GL_FRAGMENT_SHADER)
         {
-            _filePaths[0].emplace_back(filePath);
-            _fileMods[0].emplace_back(getMod(filePath));
+            _fragPaths.emplace_back(filePath);
+            _fragMods.emplace_back(getMod(filePath));
         }
         else if (shaderType == GL_VERTEX_SHADER)
         {
-            _filePaths[1].emplace_back(filePath);
-            _fileMods[1].emplace_back(getMod(filePath));
+            _vertPaths.emplace_back(filePath);
+            _vertMods.emplace_back(getMod(filePath));
         }
         else
         {
-            _filePaths[2].emplace_back(filePath);
-            _fileMods[2].emplace_back(getMod(filePath));
+            _geomPaths.emplace_back(filePath);
+            _geomMods.emplace_back(getMod(filePath));
         }
 
         // Get directory path for the file for possible includes
