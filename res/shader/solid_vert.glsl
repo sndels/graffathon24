@@ -6,7 +6,13 @@
 uniform vec3 dCamTarget;
 uniform float dRadius;
 
-layout(std430, binding = 0) buffer DataT { uvec4 positionsSpeeds[]; }
+struct Particle
+{
+    vec4 position;
+    vec4 speed;
+};
+
+layout(std430, binding = 0) buffer DataT { Particle particles[]; }
 Data;
 
 layout(location = 0) out vec2 outCoord;
@@ -16,9 +22,7 @@ void main()
     int particleIndex = gl_VertexID / 6;
     int vertexIndex = gl_VertexID % 6;
 
-    vec3 particlePos;
-    particlePos.xy = unpackHalf2x16(Data.positionsSpeeds[particleIndex].x);
-    particlePos.z = unpackHalf2x16(Data.positionsSpeeds[particleIndex].y).x;
+    vec3 particlePos = Data.particles[particleIndex].position.xyz;
 
     vec3 camPos = vec3(0, 0, -2);
     vec3 camTarget = vec3(0, 0, 0);

@@ -209,7 +209,7 @@ int main(int argc, char *argv[])
     glGenBuffers(1, &ssbo);
     glBindBuffer(GL_SHADER_STORAGE_BUFFER, ssbo);
     {
-        std::vector<uint32_t> zeros(PARTICLE_COUNT * 4, 0);
+        std::vector<uint32_t> zeros(PARTICLE_COUNT * 8, 0);
         glBufferData(
             GL_SHADER_STORAGE_BUFFER, zeros.size() * sizeof(uint32_t),
             zeros.data(), GL_DYNAMIC_DRAW);

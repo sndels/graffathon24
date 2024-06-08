@@ -3,7 +3,13 @@
 #include "noise.glsl"
 #include "uniforms.glsl"
 
-layout(std430, binding = 0) buffer DataT { uvec4 positionsSpeeds[]; }
+struct Particle
+{
+    vec4 position;
+    vec4 speed;
+};
+
+layout(std430, binding = 0) buffer DataT { Particle particles[]; }
 Data;
 
 uniform bool dReset;
@@ -19,9 +25,7 @@ void main()
     // frameIndex)
     pcg_state = uvec3(particleIndex, uTime, 0);
 
-    vec3 particlePos;
-    particlePos.xy = unpackHalf2x16(Data.positionsSpeeds[particleIndex].x);
-    particlePos.z = unpackHalf2x16(Data.positionsSpeeds[particleIndex].y).x;
+    vec3 particlePos = Data.particles[particleIndex].position.xyz;
     vec3 particleSpeed;
     bool resetPositions = length(particlePos) == 0;
     // resetPositions = true;
@@ -30,21 +34,17 @@ void main()
         particlePos = rnd3d01() * 2 - 1;
         while (length(particlePos) > 1)
             particlePos = rnd3d01() * 2 - 1;
+        particlePos += -particlePos * .7 * fbm(particlePos * 3, .25, 5);
         particleSpeed = vec3(0);
     }
     else
-    {
-        particleSpeed.xy =
-            unpackHalf2x16(Data.positionsSpeeds[particleIndex].z);
-        particleSpeed.z =
-            unpackHalf2x16(Data.positionsSpeeds[particleIndex].w).x;
-    }
+        particleSpeed = Data.particles[particleIndex].speed.xyz;
 
     particlePos += particleSpeed;
 
     // TODO:
     // Pass in dt in addition to uTime and scale this
-    float gravity = .001;
+    float gravity = .0001;
     // Clamp to avoid acceleration exploding near origo
     float scale = .1;
 
@@ -66,12 +66,6 @@ void main()
     // particleSpeed += (sin(particlePos.y) * scale - scale / 2) * gravity;
     // particleSpeed = min(particleSpeed, gravity * 10);
 
-    // clang-format off
-    Data.positionsSpeeds[particleIndex] = uvec4(
-        packHalf2x16(particlePos.xy),
-        packHalf2x16(vec2(particlePos.z, 1.)),
-        packHalf2x16(particleSpeed.xy),
-        packHalf2x16(vec2(particleSpeed.z, 1.))
-    );
-    // clang-format on
+    Data.particles[particleIndex].position = vec4(particlePos, 1.);
+    Data.particles[particleIndex].speed = vec4(particleSpeed, 1.);
 }
