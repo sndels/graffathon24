@@ -13,6 +13,7 @@
 
 enum class UniformType
 {
+    Bool,
     Float,
     Vec2,
     Vec3
@@ -21,7 +22,10 @@ enum class UniformType
 struct Uniform
 {
     UniformType type;
-    float value[3];
+    union {
+        float f[3];
+        bool b;
+    } value;
 };
 
 class Shader

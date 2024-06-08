@@ -26,6 +26,8 @@ std::string toString(UniformType type)
 {
     switch (type)
     {
+    case UniformType::Bool:
+        return "bool";
     case UniformType::Float:
         return "float";
     case UniformType::Vec2:
@@ -393,6 +395,9 @@ void Shader::collectUniforms(GLuint progID)
         UniformType type;
         switch (glType)
         {
+        case GL_BOOL:
+            type = UniformType::Bool;
+            break;
         case GL_FLOAT:
             type = UniformType::Float;
             break;
@@ -464,6 +469,7 @@ void Shader::collectUniforms(GLuint progID)
         glGetUniformfv(progID, u.second.second, default_data);
         switch (type)
         {
+        case UniformType::Bool:
         case UniformType::Float:
         case UniformType::Vec2:
         case UniformType::Vec3:
@@ -729,14 +735,17 @@ void Shader::setUniform(const std::string &name, const Uniform &uniform)
     GLint location = getUniform(name, uniform.type);
     switch (uniform.type)
     {
+    case UniformType::Bool:
+        glUniform1i(location, uniform.value.b);
+        break;
     case UniformType::Float:
-        glUniform1f(location, *uniform.value);
+        glUniform1f(location, *uniform.value.f);
         break;
     case UniformType::Vec2:
-        glUniform2fv(location, 1, uniform.value);
+        glUniform2fv(location, 1, uniform.value.f);
         break;
     case UniformType::Vec3:
-        glUniform3fv(location, 1, uniform.value);
+        glUniform3fv(location, 1, uniform.value.f);
         break;
     default:
         printf(

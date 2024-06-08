@@ -107,21 +107,25 @@ void GUI::startFrame(
             Uniform &uniform = e.second;
             switch (uniform.type)
             {
+            case UniformType::Bool:
+                uniformOffset();
+                ImGui::Checkbox(name.c_str(), &uniform.value.b);
+                break;
             case UniformType::Float:
                 uniformOffset();
-                ImGui::DragFloat(name.c_str(), uniform.value, 0.01f);
+                ImGui::DragFloat(name.c_str(), uniform.value.f, 0.01f);
                 break;
             case UniformType::Vec2:
                 uniformOffset();
-                ImGui::DragFloat2(name.c_str(), uniform.value, 0.01f);
+                ImGui::DragFloat2(name.c_str(), uniform.value.f, 0.01f);
                 break;
             case UniformType::Vec3:
                 ImGui::ColorEdit3(
-                    std::string("##" + name).c_str(), uniform.value,
+                    std::string("##" + name).c_str(), uniform.value.f,
                     ImGuiColorEditFlags_NoInputs |
                         ImGuiColorEditFlags_PickerHueWheel);
                 ImGui::SameLine();
-                ImGui::DragFloat3(name.c_str(), uniform.value, 0.01f);
+                ImGui::DragFloat3(name.c_str(), uniform.value.f, 0.01f);
                 break;
             default:
                 printf("[gui] Unknown dynamic uniform type\n");
