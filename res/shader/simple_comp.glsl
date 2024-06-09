@@ -15,8 +15,8 @@ struct Particle
 layout(std430, binding = 0) buffer DataT { Particle particles[]; }
 Data;
 
-uniform bool dReset;
-uniform float dMorph;
+// uniform bool dReset;
+// uniform float dMorph;
 
 vec2 scene(vec3 p)
 {
@@ -69,13 +69,13 @@ void main()
     // frameIndex)
     pcg_state = uvec3(particleIndex, uTime, 0);
 
-    bool sdfScene = (uTime > 30 && uTime < 45) || uTime > 52.6;
+    bool sdfScene = (uTime > 15 && uTime < 40);
 
     vec3 particlePos = Data.particles[particleIndex].position.xyz;
     vec3 particleSpeed;
     bool resetPositions = length(particlePos) == 0 || uTime < 7.2;
-    // resetPositions = true;
-    if (resetPositions || dReset)
+    // resetPositions |= dReset ;
+    if (resetPositions)
     {
         if (sdfScene)
         {
@@ -102,7 +102,11 @@ void main()
             }
             // particleSpeed += -particlePos * .8 * fbm(particlePos * 3, .25,
             // 5);
-            particlePos += -particlePos * .7 * fbm(particlePos * 3, .25, 5);
+            vec3 noisePos = particlePos;
+            // This can be used to reset the system in sync with music
+            // pR(noisePos.xy, 7);
+            // pR(noisePos.xz, 3);
+            particlePos += -particlePos * .7 * fbm(noisePos * 3, .25, 5);
             particleSpeed =
                 0.1 * vec3(
                           sin(particlePos.y * 2) * sin(particlePos.z) * .01,
@@ -151,9 +155,6 @@ void main()
                 -particlePos * gravity * fbm(particlePos * 3, .25, 5);
             particleSpeed += (sin(particlePos.y) * scale - scale / 2) * gravity;
         }
-        else if (uTime < 45.4)
-            particleSpeed +=
-                particlePos * gravity * .5 * fbm(particlePos * 20, .85, 5);
         else
         {
             particleSpeed +=
@@ -161,8 +162,10 @@ void main()
             particleSpeed += (sin(particlePos.y) * scale - scale / 2) * gravity;
             particleSpeed.x += sin(uTime) * gravity * .1;
         }
-        if (uTime > 21.1)
-            particleSpeed += (sin(particlePos.x) * scale - scale / 2) * gravity;
+        // This could be used in a later effect
+        // if (uTime > 21.1)
+        //     particleSpeed += (sin(particlePos.x) * scale - scale / 2) *
+        //     gravity;
     }
 
     Data.particles[particleIndex].position = vec4(particlePos, 1.);

@@ -3,10 +3,10 @@
 #include "camera.glsl"
 #include "uniforms.glsl"
 
-uniform vec3 dCamTarget;
-uniform float dRadius;
-uniform float dHue0;
-uniform float dHue1;
+// uniform vec3 dCamTarget;
+// uniform float dRadius;
+// uniform float dHue0;
+// uniform float dHue1;
 
 struct Particle
 {
@@ -98,7 +98,10 @@ void main()
 
     particlePos = (viewMat * vec4(particlePos, 1.)).xyz;
 
-    float radius = 0.0035 + .001 * dRadius;
+    // first sdf system is from 15s->25s
+    float sdfToVortexBlend = clamp((uTime - 15) / 25, 0, 1);
+
+    float radius = mix(0.0035, 0.0025, sdfToVortexBlend);
 
     if (vertexIndex == 0 || vertexIndex == 3)
     {
@@ -121,28 +124,29 @@ void main()
         outCoord = vec2(-1, 1);
     }
 
-    float fov = radians(100);
+    float fov = mix(radians(100), radians(60), sdfToVortexBlend);
     mat4 clipMat = cameraToClip(fov, uRes, .1, 100.);
 
     gl_Position = clipMat * vec4(particlePos, 1.);
 
     vec3 hsv0;
     vec3 hsv1;
-    if (uTime < 21)
+    // if (uTime < 21)
     {
         hsv0 = vec3(4.11, .85, .6);
         hsv1 = vec3(4.11, .85, .6);
     }
-    else if (uTime < 22)
-    {
-        hsv0 = vec3(4.11, .9, .8);
-        hsv1 = vec3(5.11, .9, .7);
-    }
-    else
-    {
-        hsv0 = vec3(4.11, .9, .8);
-        hsv1 = vec3(9.92, .9, .7);
-    }
+    // TODO: This is for escalation near the end
+    // else if (uTime < 22)
+    // {
+    //     hsv0 = vec3(4.11, .9, .8);
+    //     hsv1 = vec3(5.11, .9, .7);
+    // }
+    // else
+    // {
+    //     hsv0 = vec3(4.11, .9, .8);
+    //     hsv1 = vec3(9.92, .9, .7);
+    // }
 
     vec3 hsv =
         mix(hsv0, hsv1, 1 - clamp(length(particleSpeed) * 200. - 2., 0, 1));
