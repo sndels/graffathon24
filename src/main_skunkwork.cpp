@@ -305,6 +305,8 @@ int main(int argc, char *argv[])
             globalTime.reset();
 #endif //! DEMO_MODE
 
+        if (overrideIndex == solidShaderId || pingIndex == solidShaderId ||
+            pongIndex == solidShaderId)
         {
             computeProf.startSample();
             compute.bind(0.0);
