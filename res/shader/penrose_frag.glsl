@@ -3,9 +3,10 @@
 #include "hg_sdf.glsl"
 #include "uniforms.glsl"
 
-uniform vec3 dCamera;
-uniform float dColorStyle;
-uniform vec3 dWarp;
+uniform vec3 dCamera; // x, y, rot
+uniform vec3 dZoom; // x, y, amount
+uniform float dColorStyle; // thresholded at 0.5 to switch between the 2 styles
+uniform vec3 dWarp; // x, y, bläst
 
 struct PenroseTriangle
 {
@@ -64,10 +65,10 @@ bool tail(
         return false;                                                          \
     }
 
-RECURSE_TRIANGLES(recf8, tail, 7)
-RECURSE_TRIANGLES(recf7, recf8, 6)
-RECURSE_TRIANGLES(recf6, recf7, 5)
-RECURSE_TRIANGLES(recf5, recf6, 4)
+//RECURSE_TRIANGLES(recf8, tail, 7)
+//RECURSE_TRIANGLES(recf7, recf8, 6)
+//RECURSE_TRIANGLES(recf6, recf7, 5)
+RECURSE_TRIANGLES(recf5, tail, 4)
 RECURSE_TRIANGLES(recf4, recf5, 3)
 RECURSE_TRIANGLES(recf3, recf4, 2)
 RECURSE_TRIANGLES(recf2, recf3, 1)
@@ -77,8 +78,11 @@ vec3 color(vec2 uv, int type)
 {
     if (dColorStyle < 0.5)
     {
-        if (type == 0)
-            return vec3(0.7, 0.4, 0.2);
+        if (type == 0) {
+            float d = sqrt(dot(uv, uv));
+            float a1 = d < 1.0 - 1.0 / GOLDEN_RATIO ? 0.0 : 1.0;
+            return vec3(a1, 0.0, 0.0);
+        }
         else
             return vec3(0.3, 0.8, 0.5);
     }
@@ -99,8 +103,8 @@ void main()
 
     vec2 p = (gl_FragCoord.xy * 2.0) / uRes.yy - vec2(uAspectRatio, 1.0);
 
-    p -= dCamera.xy;
-    float zoom = dCamera.z;
+    p -= dZoom.xy;
+    float zoom = dZoom.z;
 
     vec2 warpVec = p - dWarp.xy;
     float w = dot(warpVec, warpVec);
@@ -108,6 +112,10 @@ void main()
     p *= (1.0 - dWarp.z) + dWarp.z / (w + 0.5);
 
     p /= 0.25 * pow(GOLDEN_RATIO, zoom);
+
+    mat2 cameraRot = mat2(cos(dCamera.z), sin(dCamera.z), -sin(dCamera.z), cos(dCamera.z));
+    p = cameraRot*p;
+    p += dCamera.xy;
 
     int tIds[REC_DEPTH];
     vec2 uvs[REC_DEPTH];
@@ -130,8 +138,8 @@ void main()
             vec3 c;
             if (dColorStyle < 0.5)
             {
-                vec3 c3 = color(uv3, type3);
-                c = c3 * w;
+                vec3 c2 = color(uv2, type2);
+                c = c2;
             }
             else
             {
