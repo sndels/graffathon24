@@ -125,28 +125,25 @@ void main()
     }
 
     float fov = mix(radians(100), radians(60), sdfToVortexBlend);
+    float zoomerEnd = 90;
+    if (uTime > zoomerEnd)
+        fov = radians(90);
     mat4 clipMat = cameraToClip(fov, uRes, .1, 100.);
 
     gl_Position = clipMat * vec4(particlePos, 1.);
 
     vec3 hsv0;
     vec3 hsv1;
-    // if (uTime < 21)
+    if (uTime < 97.5)
     {
         hsv0 = vec3(4.11, .85, .6);
         hsv1 = vec3(4.11, .85, .6);
     }
-    // TODO: This is for escalation near the end
-    // else if (uTime < 22)
-    // {
-    //     hsv0 = vec3(4.11, .9, .8);
-    //     hsv1 = vec3(5.11, .9, .7);
-    // }
-    // else
-    // {
-    //     hsv0 = vec3(4.11, .9, .8);
-    //     hsv1 = vec3(9.92, .9, .7);
-    // }
+    else
+    {
+        hsv0 = vec3(4.11, .9, .8);
+        hsv1 = vec3(9.92, .9, .7);
+    }
 
     vec3 hsv =
         mix(hsv0, hsv1, 1 - clamp(length(particleSpeed) * 200. - 2., 0, 1));
