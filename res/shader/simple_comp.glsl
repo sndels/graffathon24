@@ -39,7 +39,7 @@ vec2 scene(vec3 p)
         float s1 = fSphere(p, 0.5);
         float s2 = fSphere(p - vec3(0.3, 0, 0.5), 0.2);
         float s = fOpUnionRound(fOpUnionRound(s0, s1, 0.1), s2, 0.1);
-        float d = mix(s, b, (sin(uTime * 0.2) + 1) * 0.5);
+        float d = mix(s, b, (sin((uTime - 20) * 0.2) + 1) * 0.5);
         // float d = mix(s, b, dMorph);
         h = d < h.x ? vec2(d, 0) : h;
     }
@@ -74,7 +74,7 @@ void main()
     float firstSdfEnd = 40;
     // This matches intesity change in solid_frag
     float secondSdfStart = 101.2;
-    float secondSdfEnd = 120.0;
+    float secondSdfEnd = 123.8;
 
     bool sdfScene = (uTime > firstSdfStart && uTime < firstSdfEnd) ||
                     (uTime > secondSdfStart && uTime < secondSdfEnd);
@@ -181,6 +181,13 @@ void main()
     else if (
         (uTime > firstSdfEnd && uTime < zoomerStart) || uTime > secondSdfEnd)
     {
+        if (uTime > secondSdfEnd && uTime < secondSdfEnd + .05)
+        {
+            particleSpeed += -particlePos * .2 * fbm(particlePos * 5, .95, 5);
+            particleSpeed /= length(particleSpeed);
+            particleSpeed *= .1;
+        }
+
         // Flower cloud thing
         if (uTime < 45)
         {
@@ -203,7 +210,7 @@ void main()
 
     // Clear before zoomer
     if (uTime > 60 && uTime < zoomerStart)
-        particleSpeed = particleSpeed + vec3(gravity * 5, 0, 0);
+        particleSpeed = particleSpeed - vec3(gravity * 5, 0, 0);
     if (uTime > 142.5)
     {
         particleSpeed = particlePos * length(particlePos) * .2 + .002;

@@ -23,9 +23,12 @@ void main()
         intensity = 1.7;
     if (uTime > 101.2)
         intensity = 2.2;
+    if (uTime > 123.8)
+        intensity = mix(10, 2.2, (uTime - 123.8) / (150 - 123.8));
     // intensity += dIntensity;
 
-    intensity += pow((cos((uTime / 60) * 128 * 3.1415 * 2) * 0.5 + 1), 1.5) * 0.5 - 0.5;
+    intensity +=
+        pow((cos((uTime / 60) * 128 * 3.1415 * 2) * 0.5 + 1), 1.5) * 0.5 - 0.5;
 
     color = inColor * intensity;
     float r = sqrt(dot(inCoord, inCoord));
