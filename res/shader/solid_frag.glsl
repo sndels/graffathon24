@@ -24,6 +24,9 @@ void main()
     if (uTime > 101.2)
         intensity = 2.2;
     // intensity += dIntensity;
+
+    intensity += pow((cos((uTime / 60) * 128 * 3.1415 * 2) * 0.5 + 1), 1.5) * 0.5 - 0.5;
+
     color = inColor * intensity;
     float r = sqrt(dot(inCoord, inCoord));
     r = clamp(r, 0, 1);
