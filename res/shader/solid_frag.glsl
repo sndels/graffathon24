@@ -24,7 +24,7 @@ void main()
     if (uTime > 101.2)
         intensity = 2.2;
     if (uTime > 123.8)
-        intensity = mix(10, 2.2, (uTime - 123.8) / (150 - 123.8));
+        intensity = mix(10.0, 2.2, (uTime - 123.8) / (150 - 123.8));
     // intensity += dIntensity;
 
     intensity +=

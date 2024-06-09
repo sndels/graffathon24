@@ -7,6 +7,8 @@
 // uniform vec3 dZoom;        // x, y, amount
 // uniform float dColorStyle; // thresholded at 0.5 to switch between the 2
 // styles uniform vec3 dWarp;        // x, y, bläst
+const vec3 dColor1 = vec3(0.297, 0.454, 0.752);
+const vec3 dColor2 = vec3(0.798, 0.145, 0.370);
 
 struct PenroseTriangle
 {
@@ -65,10 +67,10 @@ bool tail(
         return false;                                                          \
     }
 
-// RECURSE_TRIANGLES(recf8, tail, 7)
-// RECURSE_TRIANGLES(recf7, recf8, 6)
-// RECURSE_TRIANGLES(recf6, recf7, 5)
-RECURSE_TRIANGLES(recf5, tail, 4)
+RECURSE_TRIANGLES(recf8, tail, 7)
+RECURSE_TRIANGLES(recf7, recf8, 6)
+RECURSE_TRIANGLES(recf6, recf7, 5)
+RECURSE_TRIANGLES(recf5, recf6, 4)
 RECURSE_TRIANGLES(recf4, recf5, 3)
 RECURSE_TRIANGLES(recf3, recf4, 2)
 RECURSE_TRIANGLES(recf2, recf3, 1)
@@ -76,24 +78,25 @@ RECURSE_TRIANGLES(recf1, recf2, 0)
 
 vec3 color(vec2 uv, int type, float colorStyle)
 {
-    if (colorStyle < 0.5)
-    {
-        if (type == 0)
-        {
-            float d = sqrt(dot(uv, uv));
-            float a1 = d < 1.0 - 1.0 / GOLDEN_RATIO ? 0.0 : 1.0;
-            return vec3(a1, 0.0, 0.0);
-        }
-        else
-            return vec3(0.3, 0.8, 0.5);
+    vec3 color1, color2;
+    if (type == 0) {
+        vec3 a = vec3(uv.x, uv.y, 1.0 - uv.x - uv.y);
+        float mask = pow(a.y*a.x*8.0, 0.3);
+        vec3 c = dColor1;
+        color1 = c*mask;
     }
-    else
-    {
-        float a = square(uv.x * 2.0 - 1.0);
-        a -= a * a;
-        a *= 4.0;
-        return vec3(a, a, a);
+    else {
+        vec3 a = vec3(uv.x, uv.y, 1.0 - uv.x - uv.y);
+        float mask = pow(a.y*a.x*4.0, 0.3);
+        vec3 c = dColor2;
+        color1 = c*mask;
     }
+
+    float a = square(uv.x * 2.0 - 1.0);
+    a -= a * a;
+    a *= 4.0;
+    color2 = vec3(a, a, a);
+    return (1.0-colorStyle)*color1 + colorStyle*color2;
 }
 
 void main()
@@ -110,17 +113,17 @@ void main()
     if (uTime > 72)
         zoomT -= (uTime - 72) * 1.25;
     vec3 dCamera = vec3(0, 0, 0); // x, y, rot
-    dCamera.z = mix(-.5, 2, rotT / 5);
+    dCamera.z = mix(-.5, 2.0, rotT / 5.0);
     vec3 dZoom = vec3(0, 0, 0); // x, y, amount
-    dZoom.z = mix(-.5, 2, zoomT / 5);
+    dZoom.z = mix(-.5, 2.0, zoomT / 5.0);
     float dColorStyle = 0.0;
     if (uTime > 70)
         dColorStyle = mix(0., 1.0, clamp((uTime - 70) / 4, 0, 1));
     vec3 dWarp = vec3(0, 0, 0); // x, y, bläst
     if (uTime > 72)
     {
-        dWarp.x = mix(0, .5, (t - 12) / t);
-        dWarp.z = mix(0, 2.0, (t - 12) / t);
+        dWarp.x = mix(0.0, .5, (t - 12) / t);
+        dWarp.z = mix(0.0, 2.0, (t - 12) / t);
     }
 
     p -= dZoom.xy;
@@ -156,14 +159,15 @@ void main()
             int type3 = types[zoomLevel + 2];
             int type4 = types[zoomLevel + 3];
 
-            vec3 c;
-            if (dColorStyle < 0.5)
-            {
-                vec3 c2 = color(uv2, type2, dColorStyle);
-                c = c2;
-            }
-            else
-            {
+            vec3 cc1, cc2;
+//            if (dColorStyle < 0.5)
+//            {
+                vec3 ca = color(uv1, type1, dColorStyle);
+                vec3 cb = color(uv2, type2, dColorStyle);
+                cc1 = (1.0 - zoomFrac) * ca + zoomFrac * cb;
+//            }
+//            else
+//            {
                 vec3 c1 = color(uv1, 0, dColorStyle);
                 vec3 c2 = color(uv2, 0, dColorStyle);
                 vec3 c3 = color(uv3, 0, dColorStyle);
@@ -177,17 +181,17 @@ void main()
                     vec3(square(1.0 - z2), 2.0 * z2 * (1.0 - z2), z2 * z2);
                 float wm = clamp(zoomFrac, 0.0, 1.0);
 
-                vec3 ca = w1.x * c1 + w1.y * c2 + w1.z * c3;
-                vec3 cb = w2.x * c2 + w2.y * c3 + w2.z * c4;
-                c = (1.0 - wm) * ca + wm * cb;
+                ca = w1.x * c1 + w1.y * c2 + w1.z * c3;
+                cb = w2.x * c2 + w2.y * c3 + w2.z * c4;
+                cc2 = (1.0 - wm) * ca + wm * cb;
 
-                c = 0.5 + 0.5 * tanh((c - 0.5) * 5.0);
-                c.r = pow(c.r, 10.0);
-                c.g = pow(c.g, 7.0);
-                c.b = pow(c.b, 3.0);
-            }
+                cc2 = 0.5 + 0.5 * tanh((cc2 - 0.5) * 5.0);
+                cc2.r = pow(cc2.r, 10.0);
+                cc2.g = pow(cc2.g, 7.0);
+                cc2.b = pow(cc2.b, 3.0);
+//            }
 
-            fragColor = vec4(c, 1.0);
+            fragColor = vec4((1.0-dColorStyle)*cc1 + dColorStyle*cc2, 1.0);
             return;
         }
     }
