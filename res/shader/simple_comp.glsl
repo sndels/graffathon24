@@ -204,6 +204,12 @@ void main()
     // Clear before zoomer
     if (uTime > 60 && uTime < zoomerStart)
         particleSpeed = particleSpeed + vec3(gravity * 5, 0, 0);
+    if (uTime > 142.5)
+    {
+        particleSpeed = particlePos * length(particlePos) * .2 + .002;
+        pR(particleSpeed.xz, uTime);
+        pR(particleSpeed.yz, uTime * .5);
+    }
 
     Data.particles[particleIndex].position = vec4(particlePos, 1.);
     Data.particles[particleIndex].speed = vec4(particleSpeed, 1.);

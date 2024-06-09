@@ -59,9 +59,9 @@ static struct sync_cb audioSync = {
         shader.setVec2(                                                        \
             "uRes", (GLfloat)window.width(), (GLfloat)window.height());        \
         shader.setFloat(                                                       \
-            "uAspectRatio", (GLfloat)window.width()/(GLfloat)window.height()); \
-    }                                                                          \
-    while (0)
+            "uAspectRatio",                                                    \
+            (GLfloat)window.width() / (GLfloat)window.height());               \
+    } while (0)
 
 #else // !DEMO_NODE
 #define UPDATE_COMMON_UNIFORMS(shader)                                         \
@@ -73,7 +73,8 @@ static struct sync_cb audioSync = {
         shader.setVec2(                                                        \
             "uRes", (GLfloat)window.width(), (GLfloat)window.height());        \
         shader.setFloat(                                                       \
-            "uAspectRatio", (GLfloat)window.width()/(GLfloat)window.height()); \
+            "uAspectRatio",                                                    \
+            (GLfloat)window.width() / (GLfloat)window.height());               \
     } while (0)
 #endif // DEMO_MODE
 
@@ -157,6 +158,7 @@ int main(int argc, char *argv[])
     sceneShaders.emplace_back(
         "RayMarch", rocket, vertPath,
         RES_DIRECTORY "shader/ray_marching_frag.glsl");
+    int textShaderId = sceneShaders.size();
     sceneShaders.emplace_back(
         "Text", rocket, vertPath, RES_DIRECTORY "shader/text_frag.glsl");
     int solidShaderId = sceneShaders.size();
@@ -259,6 +261,8 @@ int main(int argc, char *argv[])
             sync_connect(rocket, "localhost", SYNC_DEFAULT_PORT);
 #endif // TCPROCKET
 
+        float const currentTimeS = (float)AudioStream::getInstance().getTimeS();
+
         int32_t pingIndex = std::clamp(
             (int32_t)(float)sync_get_val(pingScene, syncRow), 0,
             (int32_t)sceneShaders.size() - 1);
@@ -266,12 +270,11 @@ int main(int argc, char *argv[])
             (int32_t)(float)sync_get_val(pongScene, syncRow), 0,
             (int32_t)sceneShaders.size() - 1);
         pingIndex = solidShaderId;
-        pongIndex = 1;
+        pongIndex = currentTimeS < 135 ? penroseShaderId : textShaderId;
 
         glClearColor(0.f, 0.f, 0.f, 1.f);
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-        float const currentTimeS = (float)AudioStream::getInstance().getTimeS();
 #ifndef DEMO_MODE
         if (window.drawGUI())
         {
@@ -331,16 +334,8 @@ int main(int argc, char *argv[])
             scenePingProf.startSample();
             sceneShaders[overrideIndex].bind(syncRow);
             if (overrideIndex == penroseShaderId)
-            {
-                penroseTriangles.update(
-#ifdef DEMO_MODE
-                    currentTimeS
-#else  // DEMO_NODE
-                    gui.useSliderTime() ? gui.sliderTime() : globalTime.getSeconds()
-#endif // DEMO_MODE
-                );
                 penroseTriangles.bind(&sceneShaders[overrideIndex]);
-            }
+
             sceneShaders[overrideIndex].setFloat(
                 "uTime",
 #ifdef DEMO_MODE
@@ -352,7 +347,8 @@ int main(int argc, char *argv[])
             sceneShaders[overrideIndex].setVec2(
                 "uRes", (GLfloat)window.width(), (GLfloat)window.height());
             sceneShaders[overrideIndex].setFloat(
-                "uAspectRatio", (GLfloat)window.width() / (GLfloat)window.height());
+                "uAspectRatio",
+                (GLfloat)window.width() / (GLfloat)window.height());
             if (overrideIndex != solidShaderId)
                 q.render();
             else
@@ -375,8 +371,14 @@ int main(int argc, char *argv[])
             scenePingProf.endSample();
 
             scenePongProf.startSample();
+            if (pongIndex == penroseShaderId)
+                penroseTriangles.bind(&sceneShaders[pongIndex]);
             sceneShaders[pongIndex].bind(syncRow);
             scenePongFbo.bindWrite();
+
+            glClearColor(0.f, 0.f, 0.f, 1.f);
+            glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
             UPDATE_COMMON_UNIFORMS(sceneShaders[pongIndex]);
             if (pongIndex != solidShaderId)
                 q.render();
