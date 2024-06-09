@@ -3,10 +3,10 @@
 #include "hg_sdf.glsl"
 #include "uniforms.glsl"
 
-uniform vec3 dCamera; // x, y, rot
-uniform vec3 dZoom; // x, y, amount
-uniform float dColorStyle; // thresholded at 0.5 to switch between the 2 styles
-uniform vec3 dWarp; // x, y, bläst
+// uniform vec3 dCamera;      // x, y, rot
+// uniform vec3 dZoom;        // x, y, amount
+// uniform float dColorStyle; // thresholded at 0.5 to switch between the 2
+// styles uniform vec3 dWarp;        // x, y, bläst
 
 struct PenroseTriangle
 {
@@ -65,20 +65,21 @@ bool tail(
         return false;                                                          \
     }
 
-//RECURSE_TRIANGLES(recf8, tail, 7)
-//RECURSE_TRIANGLES(recf7, recf8, 6)
-//RECURSE_TRIANGLES(recf6, recf7, 5)
+// RECURSE_TRIANGLES(recf8, tail, 7)
+// RECURSE_TRIANGLES(recf7, recf8, 6)
+// RECURSE_TRIANGLES(recf6, recf7, 5)
 RECURSE_TRIANGLES(recf5, tail, 4)
 RECURSE_TRIANGLES(recf4, recf5, 3)
 RECURSE_TRIANGLES(recf3, recf4, 2)
 RECURSE_TRIANGLES(recf2, recf3, 1)
 RECURSE_TRIANGLES(recf1, recf2, 0)
 
-vec3 color(vec2 uv, int type)
+vec3 color(vec2 uv, int type, float colorStyle)
 {
-    if (dColorStyle < 0.5)
+    if (colorStyle < 0.5)
     {
-        if (type == 0) {
+        if (type == 0)
+        {
             float d = sqrt(dot(uv, uv));
             float a1 = d < 1.0 - 1.0 / GOLDEN_RATIO ? 0.0 : 1.0;
             return vec3(a1, 0.0, 0.0);
@@ -103,6 +104,25 @@ void main()
 
     vec2 p = (gl_FragCoord.xy * 2.0) / uRes.yy - vec2(uAspectRatio, 1.0);
 
+    float t = uTime - 60;
+    float rotT = t + .2 * (sin((uTime / 120) * 128 * 3.1415 * 2) * 0.5 + 1);
+    float zoomT = t;
+    if (uTime > 72)
+        zoomT -= (uTime - 72) * 1.25;
+    vec3 dCamera = vec3(0, 0, 0); // x, y, rot
+    dCamera.z = mix(-.5, 2, rotT / 5);
+    vec3 dZoom = vec3(0, 0, 0); // x, y, amount
+    dZoom.z = mix(-.5, 2, zoomT / 5);
+    float dColorStyle = 0.0;
+    if (uTime > 70)
+        dColorStyle = mix(0., 1.0, clamp((uTime - 70) / 4, 0, 1));
+    vec3 dWarp = vec3(0, 0, 0); // x, y, bläst
+    if (uTime > 72)
+    {
+        dWarp.x = mix(0, .5, (t - 12) / t);
+        dWarp.z = mix(0, 2.0, (t - 12) / t);
+    }
+
     p -= dZoom.xy;
     float zoom = dZoom.z;
 
@@ -113,8 +133,9 @@ void main()
 
     p /= 0.25 * pow(GOLDEN_RATIO, zoom);
 
-    mat2 cameraRot = mat2(cos(dCamera.z), sin(dCamera.z), -sin(dCamera.z), cos(dCamera.z));
-    p = cameraRot*p;
+    mat2 cameraRot =
+        mat2(cos(dCamera.z), sin(dCamera.z), -sin(dCamera.z), cos(dCamera.z));
+    p = cameraRot * p;
     p += dCamera.xy;
 
     int tIds[REC_DEPTH];
@@ -138,15 +159,15 @@ void main()
             vec3 c;
             if (dColorStyle < 0.5)
             {
-                vec3 c2 = color(uv2, type2);
+                vec3 c2 = color(uv2, type2, dColorStyle);
                 c = c2;
             }
             else
             {
-                vec3 c1 = color(uv1, 0);
-                vec3 c2 = color(uv2, 0);
-                vec3 c3 = color(uv3, 0);
-                vec3 c4 = color(uv4, 0);
+                vec3 c1 = color(uv1, 0, dColorStyle);
+                vec3 c2 = color(uv2, 0, dColorStyle);
+                vec3 c3 = color(uv3, 0, dColorStyle);
+                vec3 c4 = color(uv4, 0, dColorStyle);
 
                 float z1 = clamp((zoomFrac + 1.0) * 0.5, 0.0, 1.0);
                 vec3 w1 =

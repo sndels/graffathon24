@@ -58,7 +58,7 @@ void main()
         else
             color = ping.rgb;
     }
-    else if (uTime > 61.5 && uTime < 90)
+    else if (uTime > 60.2 && uTime < 90)
     {
         color = pong.rgb;
     }
